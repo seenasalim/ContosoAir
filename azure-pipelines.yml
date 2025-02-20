@@ -1,35 +1,47 @@
-# Node.js
-# Build a general Node.js project with npm.
-# Add steps that analyze code, save build artifacts, deploy, and more:
-# https://docs.microsoft.com/azure/devops/pipelines/languages/javascript
-
 trigger:
-- master
+  - master
 
 pool:
   name: default
-  trigger:
-     - master
-  steps:
-     - task: CopyFiles@2
-       displayName: 'Copy Files to: $(build.artifactstagingdirectory)/Templates'
-       inputs:
-         SourceFolder: deployment
-         Contents: '*.json'
-         TargetFolder: '$(build.artifactstagingdirectory)/Templates'
-     - task: Npm@1
-       displayName: 'npm custom'
-       inputs:
-         command: custom
-         verbose: false
-         customCommand: 'install --production'
-     - task: ArchiveFiles@2
-       displayName: 'Archive $(Build.SourcesDirectory)'
-       inputs:
-         rootFolderOrFile: '$(Build.SourcesDirectory)'
-         includeRootFolder: false
-     - task: PublishPipelineArtifact@1
-       inputs:
-         targetPath: '$(build.artifactstagingdirectory)'
-         artifact: 'drop'
-         publishLocation: 'pipeline'
+
+# Define stages
+stages:
+  - stage: Build
+    displayName: 'Build and Deploy Node.js Project'
+    jobs:
+      - job: BuildJob
+        displayName: 'Build and publish the Node.js project'
+        steps:
+          # Step to copy necessary files
+          - task: CopyFiles@2
+            displayName: 'Copy Files to: $(build.artifactstagingdirectory)/Templates'
+            inputs:
+              SourceFolder: deployment
+              Contents: '*.json'
+              TargetFolder: '$(build.artifactstagingdirectory)/Templates'
+          
+          # Step to install npm dependencies
+          - task: Npm@1
+            displayName: 'npm install dependencies'
+            inputs:
+              command: install
+              verbose: false
+              workingDirectory: $(Build.SourcesDirectory)
+
+          # Step to run custom npm command for production installation
+
+          # Step to archive the files
+          - task: ArchiveFiles@2
+            displayName: 'Archive $(Build.SourcesDirectory)'
+            inputs:
+              rootFolderOrFile: '$(Build.SourcesDirectory)'
+              includeRootFolder: false
+          
+          # Step to publish artifacts
+          - task: PublishPipelineArtifact@1
+            inputs:
+              targetPath: '$(Build.ArtifactStagingDirectory)'
+              artifact: 'drop'
+              publishLocation: 'pipeline'
+
+  # Add any other stages here if needed, for example, for deployment or testing
